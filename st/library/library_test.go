@@ -941,3 +941,60 @@ func (s *StreamSuite) TestJoin(c *C) {
 		}
 	}
 }
+
+func (s *StreamSuite) TestToS3(c *C) {
+	log.Println("testing toS3")
+	b, ch := newBlock("testingToS3", "tos3")
+	go blocks.BlockRoutine(b)
+
+	var numLines float64 = 2
+	ruleMsg := map[string]interface{}{"BucketName": "nytlabs-test", "Key": "streamtools-tos3.json", "NumLines": numLines}
+	toRule := &blocks.Msg{Msg: ruleMsg, Route: "rule"}
+	ch.InChan <- toRule
+
+	outChan := make(chan *blocks.Msg)
+	ch.AddChan <- &blocks.AddChanMsg{Route: "1", Channel: outChan}
+
+	queryOutChan := make(chan interface{})
+	time.AfterFunc(time.Duration(1)*time.Second, func() {
+		ch.QueryChan <- &blocks.QueryMsg{RespChan: queryOutChan, Route: "rule"}
+	})
+
+	time.AfterFunc(time.Duration(2)*time.Second, func() {
+		inMsgMsg := map[string]interface{}{"Foo": "Bar"}
+		postData := &blocks.Msg{Msg: inMsgMsg, Route: "in"}
+		ch.InChan <- postData
+
+		inMsgMsg2 := map[string]interface{}{"JFK": "Idlewild"}
+		postData2 := &blocks.Msg{Msg: inMsgMsg2, Route: "in"}
+		ch.InChan <- postData2
+
+		inMsgMsg3 := map[string]interface{}{"LAX": "Traffic Jam"}
+		postData3 := &blocks.Msg{Msg: inMsgMsg3, Route: "in"}
+		ch.InChan <- postData3
+	})
+
+	time.AfterFunc(time.Duration(5)*time.Second, func() {
+		ch.QuitChan <- true
+	})
+
+	for {
+		select {
+		case messageI := <-queryOutChan:
+			if !reflect.DeepEqual(messageI, ruleMsg) {
+				c.Fail()
+			}
+
+		case message := <-outChan:
+			log.Println("message caught in test on outchan")
+			log.Println(message)
+
+		case err := <-ch.ErrChan:
+			if err != nil {
+				c.Errorf(err.Error())
+			} else {
+				return
+			}
+		}
+	}
+}

@@ -17,6 +17,7 @@ var Blocks = map[string]func() blocks.BlockInterface{
 	"towebsocket":     NewToWebsocket,
 	"tofile":          NewToFile,
 	"tolog":           NewToLog,
+	"tos3":            NewToS3,
 	"mask":            NewMask,
 	"filter":          NewFilter,
 	"sync":            NewSync,
