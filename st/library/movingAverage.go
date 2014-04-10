@@ -1,3 +1,9 @@
+// This version of moving average handles NaN in json output,
+// but requires changing float64 to jsonFloat
+// Leaving this in a branch because the approach requires us changing
+// all float64 output to jsonFloat, which is a bit much
+//
+
 package library
 
 import (
@@ -6,6 +12,8 @@ import (
 	"github.com/nytlabs/gojee"
 	"github.com/nytlabs/streamtools/st/blocks" // blocks
 	"github.com/nytlabs/streamtools/st/util"
+	"math"
+	"strconv"
 	"time"
 )
 
@@ -19,6 +27,17 @@ type MovingAverage struct {
 	in        chan interface{}
 	out       chan interface{}
 	quit      chan interface{}
+}
+
+type jsonFloat float64
+
+func (v jsonFloat) MarshalJSON() ([]byte, error) {
+	vTyped := float64(v)
+	if math.IsNaN(vTyped) {
+		return []byte(`"NaN"`), nil
+	} else {
+		return []byte(strconv.FormatFloat(vTyped, 'f', -1, 64)), nil
+	}
 }
 
 // we need to build a simple factory so that streamtools can make new blocks of this kind
@@ -38,19 +57,15 @@ func (b *MovingAverage) Setup() {
 	b.out = b.Broadcast()
 }
 
-func pqAverage(pq *PriorityQueue) float64 {
+func pqAverage(pq *PriorityQueue) jsonFloat {
 	var sum float64
 	sum = 0
 	for _, pqmsg := range *pq {
-		v := pqmsg.val
-		val, ok := v.(float64)
-		if !ok {
-			continue
-		}
+		val := pqmsg.val.(float64)
 		sum += val
 	}
 	N := float64(len(*pq))
-	return sum / N
+	return jsonFloat(sum / N)
 }
 
 // Run is the block's main loop. Here we listen on the different channels we set up.
