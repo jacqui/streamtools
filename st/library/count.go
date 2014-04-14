@@ -26,6 +26,7 @@ func NewCount() blocks.BlockInterface {
 
 func (b *Count) Setup() {
 	b.Kind = "Count"
+	b.Desc = "counts the number of messages it has seen over the specified Window"
 	b.in = b.InRoute("in")
 	b.inrule = b.InRoute("rule")
 	b.inpoll = b.InRoute("poll")

@@ -38,6 +38,7 @@ type LogStreams struct {
 type Block struct {
 	Id            string // the name of the block specifed by the user (like MyBlock)
 	Kind          string // the kind of block this is (like count, toFile, fromSQS)
+	Desc          string // the description of block ('counts the number of messages it has seen')
 	inRoutes      map[string]chan interface{}
 	queryRoutes   map[string]chan chan interface{}
 	broadcast     chan interface{}
@@ -49,6 +50,7 @@ type Block struct {
 
 type BlockDef struct {
 	Type        string
+	Desc        string
 	InRoutes    []string
 	QueryRoutes []string
 	OutRoutes   []string
