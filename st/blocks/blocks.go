@@ -143,6 +143,7 @@ func (b *Block) GetDef() *BlockDef {
 
 	return &BlockDef{
 		Type:        b.Kind,
+		Desc:        b.Desc,
 		InRoutes:    inRoutes,
 		QueryRoutes: queryRoutes,
 		OutRoutes:   outRoutes,
