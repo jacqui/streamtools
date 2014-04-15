@@ -16,6 +16,7 @@ $(function() {
     // constants
     var DELETE = 8,
         BACKSPACE = 46,
+        QUESTION_MARK = 191,
         ROUTE = 10,
         HALF_ROUTE = ROUTE * 0.5,
         ROUTE_SPACE = ROUTE * 1.5,
@@ -56,6 +57,15 @@ $(function() {
     $('#create-input').typeahead(null, {
         displayKey: 'key',
         source: libraryHound.ttAdapter()
+    });
+
+    $('#ui-ref-toggle').click(function() {
+      $('#ui-ref .ui-ref-contents').fadeToggle();
+    });
+
+    $("body").on("click", "#ui-ref-blockdefs dl dt", function() {
+      var showthis = $("#" + $(this).attr("data-toggle"));
+      $(showthis).fadeToggle();
     });
 
     //
@@ -209,6 +219,12 @@ $(function() {
         // if so, don't allow multiselect
         if ($('input').is(':focus') || $('textarea').is(':focus')) {
             return;
+        }
+
+        // if key is question mark ?
+        if (e.keyCode == QUESTION_MARK) {
+            e.preventDefault();
+            $("#ui-ref .ui-ref-contents").fadeToggle();
         }
 
         // if key is backspace or delete
@@ -439,6 +455,16 @@ $(function() {
                     "action": "export"
                 }));
             }, 1000);
+
+            var blocks = [];
+            d3.entries(library).forEach(function(key, value) {
+              blocks.push({type: key.key, desc: key.value.Desc})
+            });
+            var refTemplate = $('#ui-ref-item-template').html();
+            var refTmpl = _.template(refTemplate, {
+              data: blocks
+            });
+            $("#ui-ref .ui-ref-contents").prepend(refTmpl);
         };
         this.ws.onclose = uiReconnect;
         this.ws.onmessage = function(d) {
