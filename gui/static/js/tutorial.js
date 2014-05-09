@@ -19,6 +19,7 @@ $(window).load(function() {
 
   // does the url have params that include 'tutorial'? if so, load up the... tutorial.
   // otherwise just skip all this, streamtools as usual.
+  // TODO: support multiple tutorials, loading up the one requested
   if (params && params["tutorial"]) {
 
     // TODO: figure out a better way to do this so it doesn't flash on the screen
@@ -70,6 +71,38 @@ $(window).load(function() {
         attachTo: '#ui-ref-toggle',
         buttons: false
     });
+
+    var tutorialConfigs = {
+      'gov': [
+        {
+          'type': 'step',
+          'name': 'welcome',
+          'text': "Welcome to Streamtools!",
+          "attachTo": "svg",
+          "tetherOptions": { "targetAttachment": "middle center", "attachment": "middle center" },
+          "buttons": [ { "text": "Next" } ]
+        },
+        {
+          'type': 'step',
+          'name': 'goal',
+          'text': 'In this demo, we\'ll use streamtools to see live clicks on the US government short links.',
+          "attachTo": "svg",
+          "tetherOptions": { "targetAttachment": "middle center", "attachment": "middle center" },
+          "buttons": [ { "text": "Next" } ]
+        },
+        {
+          'type': 'step',
+          'name': 'intro-to-ref',
+          'text': ['First, we need a <span class="tutorial-blockname">fromhttpstream</span> block.' , ' Click the hamburger button to see the reference.'],
+          'tetherOptions': {},
+          'attachTo': '#ui-ref-toggle',
+          "buttons": false
+        }
+      ]
+    };
+
+    window.tutorialConfigs = tutorialConfigs;
+    window.tour = tour;
 
     var addFromHTTP = tour.addStep('add-fromhttp', {
       text: 'Click <span class="tutorial-blockname">fromhttpstream</span> to add that block, then click Next.',
