@@ -1,4 +1,6 @@
 $(window).load(function() {
+  var tour, tours, params;
+
   // from http://stackoverflow.com/a/647272
   // until we figure out a better/different way to trigger tutorials
   // i'm gonna go with query string params (linkable, easy to do)
@@ -16,6 +18,7 @@ $(window).load(function() {
   
   // grab the query string params
   params = queryParams();
+  window.params = params;
 
   // does the url have params that include 'tutorial'? if so, load up the... tutorial.
   // otherwise just skip all this, streamtools as usual.
@@ -28,167 +31,92 @@ $(window).load(function() {
       $(".intro-text").remove();
     }
 
-    var tour;
-    var httpBlock;
-
-    tour = new Shepherd.Tour({
-      defaults: {
-        classes: 'shepherd-theme-arrows',
-         scrollTo: true
-      }
-    });
-
-    var welcome = tour.addStep('welcome', {
-      text: 'Welcome to Streamtools!',
-        attachTo: 'svg',
-        tetherOptions: {
-          targetAttachment: 'middle center',
-        attachment: 'middle center',
+    govTour = new Shepherd.Tour({
+      steps: [
+        { id: "welcome",
+          text: "Welcome to Streamtools!",
+          attachTo: "svg",
+          tetherOptions: { "targetAttachment": "middle center", "attachment": "middle center" }
         },
-        buttons: [
-    {
-      text: 'Next',
-    }
-    ]
-    });
-
-    var goal = tour.addStep('goal', {
-      text: 'In this demo, we\'ll use streamtools to see live clicks on the US government short links.',
-        attachTo: 'svg',
-        tetherOptions: {
-          targetAttachment: 'middle center',
-        attachment: 'middle center',
-        },
-        buttons: [
-    {
-      text: 'Next',
-    }
-    ]
-    });
-
-    var clickRef = tour.addStep('intro-to-ref', {
-      text: ['First, we need a <span class="tutorial-blockname">fromhttpstream</span> block.' , ' Click the hamburger button to see the reference.'],
-        attachTo: '#ui-ref-toggle',
-        buttons: false
-    });
-
-    var tutorialConfigs = {
-      'gov': [
-        {
-          'type': 'step',
-          'name': 'welcome',
-          'text': "Welcome to Streamtools!",
-          "attachTo": "svg",
-          "tetherOptions": { "targetAttachment": "middle center", "attachment": "middle center" },
-          "buttons": [ { "text": "Next" } ]
+        { id: 'goal',
+          text: 'In this demo, we\'ll use streamtools to see live clicks on the US government short links.',
+          attachTo: "svg",
+          tetherOptions: { "targetAttachment": "middle center", "attachment": "middle center" }
         },
         {
-          'type': 'step',
-          'name': 'goal',
-          'text': 'In this demo, we\'ll use streamtools to see live clicks on the US government short links.',
-          "attachTo": "svg",
-          "tetherOptions": { "targetAttachment": "middle center", "attachment": "middle center" },
-          "buttons": [ { "text": "Next" } ]
+          id: 'intro-to-ref',
+          text: ['First, we need a <span class="tutorial-blockname">fromhttpstream</span> block.' , ' Click the hamburger button to see the reference.'],
+          attachTo: '#ui-ref-toggle'
+        },
+        { 
+          id: 'add-fromhttp',
+          text: 'Click <span class="tutorial-blockname">fromhttpstream</span> to add that block, then click Next.',
+          attachTo: 'li[data-block-type="fromhttpstream"]'
+        },
+        { 
+          id: 'edit-fromhttp',
+          text: ['Double-click the block to edit its rules.', 'Paste <span class="tutorial-url">http://developer.usa.gov/1usagov</span> into the endpoint, then click Next.'],
+          attachTo: 'svg'
+        },
+        { 
+          id: 'add-tolog',
+          text: [ 'Now let\'s add a block to log our data.', 'Double-click anywhere on screen to add a block.', 'Type in <span class="tutorial-blockname">tolog</span> and hit Enter.' ],
+          tetherOptions: { 'targetAttachment': 'bottom right', 'attachment': 'bottom right' },
+          attachTo: 'svg'
+        },
+        { 
+          id: 'make-connection1',
+          text: [ 'Let\'s connect the two, so we have data streaming into our log.', 'Click the OUT box on your <span class="tutorial-blockname">fromhttpstream</span> box (the bottom black box). ' ,'Connect it to the IN on your <span class="tutorial-blockname">tolog</span> (the top black box).' ],
+          tetherOptions: { 'targetAttachment': 'bottom right', 'attachment': 'bottom right' },
+          attachTo: 'svg'
+        },
+        { 
+          id: 'view-log',
+          text: 'Now click the log (this black bar) to view your data!',
+          tetherOptions: { 'targetAttachment': 'bottom center', 'attachment': 'bottom center' },
+          attachTo: 'svg',
+          buttons: [{ 'text': 'Complete' } ]
+        },
+      ]
+    });
+
+    mtaTour = new Shepherd.Tour({
+      steps: [
+        {
+          id: 'goal',
+          text: "In this demo, we\'ll use streamtools to poll the MTA for lost & found property.",
+          attachTo: "svg",
+          tetherOptions: { "targetAttachment": "middle center", "attachment": "middle center" }
         },
         {
-          'type': 'step',
-          'name': 'intro-to-ref',
-          'text': ['First, we need a <span class="tutorial-blockname">fromhttpstream</span> block.' , ' Click the hamburger button to see the reference.'],
-          'tetherOptions': {},
-          'attachTo': '#ui-ref-toggle',
-          "buttons": false
+          id: 'ticker-block',
+          text: [ "Let's start by creating a block to control how frequently we poll for new data.", "Double-click, enter <span class='tutorial-blockname'>ticker</span> in the field and hit Enter." ],
+          attachTo: 'svg'
+        },
+        { 
+          id: 'config-ticker',
+          text: "Doubleclick on <span class='tutorial-blockname'>ticker</span> block and give it an interval of 15m. Once you 'update' the block, click Next to continue.",
+          attachTo: 'li[data-block-type="ticker"]'
+        },
+        { 
+          id: 'map-block',
+          text: ["Now add a <span class='tutorial-blockname'>map</span> block. We're going to use this block to tell streamtools where to find the MTA's xml."],
+          attachTo: 'svg'
+        },
+        { 
+          id: 'config-map',
+          text: ["Open the map block's config panel and paste this JSON into the textarea:", '{"url": "\'http://advisory.mtanyct.info/LPUWebServices/CurrentLostProperty.aspx\'"}'],
+          attachTo: 'li[data-block-type="map"]'
         }
       ]
+    });
+
+    tours = {
+      gov: govTour,
+      mta: mtaTour
     };
-
-    window.tutorialConfigs = tutorialConfigs;
-    window.tour = tour;
-
-    var addFromHTTP = tour.addStep('add-fromhttp', {
-      text: 'Click <span class="tutorial-blockname">fromhttpstream</span> to add that block, then click Next.',
-        attachTo: 'li[data-block-type="fromhttpstream"]',
-        buttons: [
-    {
-      text: 'Next'
-    }
-    ],
-    });
-
-    $("#ui-ref-toggle").one('click', function() {
-      if (clickRef.isOpen()) {
-        return Shepherd.activeTour.next();
-      }
-    });
-
-    var editFromHTTP = tour.addStep('edit-fromhttp', {
-      text: [
-      'Double-click the block to edit its rules.', 
-        'Paste <span class="tutorial-url">http://developer.usa.gov/1usagov</span> into the endpoint, then click Next.'
-      ],
-        tetherOptions:
-    {
-      targetAttachment: 'top left',
-        attachment: 'top right',
-    },
-        attachTo: httpBlock,
-        buttons: [
-    {
-      text: 'Next'
-    }
-    ],
-    });
-
-    var addTolog = tour.addStep('add-tolog', {
-      text: [
-      'Now let\'s add a block to log our data.', 
-        'Double-click anywhere on screen to add a block.',
-        'Type in <span class="tutorial-blockname">tolog</span> and hit Enter.'
-      ],
-        tetherOptions:
-    {
-      targetAttachment: 'bottom right',
-        attachment: 'bottom right',
-    },
-        attachTo: 'svg',
-        buttons: [
-    {
-      text: 'Next'
-    }
-    ]
-    });
-
-    var makeConnection1 = tour.addStep('make-connection1', {
-      text: [
-      'Let\'s connect the two, so we have data streaming into our log.', 
-        'Click the OUT box on your <span class="tutorial-blockname">fromhttpstream</span> box (the bottom black box). ' ,'Connect it to the IN on your <span class="tutorial-blockname">tolog</span> (the top black box).'
-      ],
-        tetherOptions:
-    {
-      targetAttachment: 'bottom right',
-        attachment: 'bottom right',
-    },
-        attachTo: 'svg',
-        buttons: [
-    {
-      text: 'Next'
-    }
-    ]
-    });
-
-    var viewLog = tour.addStep('view-log', {
-      text: 'Now click the log (this black bar) to view your data!',
-        tetherOptions:
-    {
-      targetAttachment: 'bottom center',
-        attachment: 'bottom center',
-    },
-        attachTo: "svg",
-        buttons: [
-    {
-      text: 'Complete'
-    }
-    ],
-    });
+    window.tours = tours;
+    console.log(tours);
 
     function checkBlockBeforeProgress(req, cat) {
       var required = req;
@@ -260,33 +188,36 @@ $(window).load(function() {
     }
 
     $(document).on("click", ".shepherd-button", function() {
-      if (welcome.isOpen()) {
+      if ( tour.getById('welcome').isOpen() || tour.getById('goal').isOpen() || tour.getById('intro-to-ref').isOpen() ) {
         Shepherd.activeTour.next();
       }
-      else if (goal.isOpen()) {
-        Shepherd.activeTour.next();
-      }
-      else if (addFromHTTP.isOpen()) {
+      else if ( tour.getById('add-fromhttp').isOpen() ) {
         var b = $("text").text("fromhttpstream").prev();
         httpBlock = "rect[data-id='" + b.attr('data-id') + "']";
 
         tour.getById("edit-fromhttp")["options"]["attachTo"] = httpBlock;
         checkBlockBeforeProgress("fromhttpstream", "type");
       } 
-      else if (editFromHTTP.isOpen()) {
+      else if ( tour.getById('edit-fromhttp').isOpen() ) {
         checkBlockBeforeProgress("http://developer.usa.gov/1usagov", "endpoint");
       } 
-      else if (addTolog.isOpen()) {
+      else if ( tour.getById('add-tolog').isOpen() ) {
         checkBlockBeforeProgress("tolog", "type");
       }
-      else if (makeConnection1.isOpen()) {
+      else if (tour.getById('make-connection1').isOpen()) {
         checkConnectionsBeforeProgress("fromhttpstream", "tolog");
       }
-      else if (viewLog.isOpen()) {
+      else if (tour.getById('view-log').isOpen()) {
         Shepherd.activeTour.complete();	
       }
     });
-    tour.start();
-  }
 
+    tour = tours[params['tutorial']];
+
+    if (tour) {
+      console.log("starting tour for: " + params['tutorial']);
+      tour.start();
+      console.log(Shepherd.activeTour);
+    }
+  }
 });
