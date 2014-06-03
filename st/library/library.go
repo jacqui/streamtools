@@ -47,7 +47,6 @@ var Blocks = map[string]func() blocks.BlockInterface{
 	"learn":              NewLearn,
 	"logisticModel":      NewLogisticModel,
 	"linearModel":        NewLinearModel,
-	"gethttp":            NewGetHTTP,
 	"gaussian":           NewGaussian,
 	"zipf":               NewZipf,
 	"poisson":            NewPoisson,
@@ -61,8 +60,6 @@ var Blocks = map[string]func() blocks.BlockInterface{
 	"dedupe":             NewDeDupe,
 	"javascript":         NewJavascript,
 	"fft":                NewFFT,
-	"postHTTP":           NewPostHTTP,
-	"putHTTP":            NewPutHTTP,
 	"webRequest":         NewWebRequest,
 }
 
