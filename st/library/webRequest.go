@@ -6,6 +6,7 @@ import (
 	"errors"
 	"io/ioutil"
 	"net/http"
+	"strings"
 
 	"github.com/nytlabs/gojee"
 	"github.com/nytlabs/streamtools/st/blocks" // blocks
@@ -60,7 +61,7 @@ func (b *WebRequest) Run() {
 	var ok bool
 
 	url := ""
-	var urlPath string
+	var urlEntry string
 	var urlTree *jee.TokenTree
 
 	bodyPath := "."
@@ -91,29 +92,18 @@ func (b *WebRequest) Run() {
 	for {
 		select {
 		case ruleI := <-b.inrule:
-			httpMethod, err = util.ParseString(ruleI, "Method")
-			if err != nil {
-				b.Error(err)
-				break
-			}
-
-			url, err = util.ParseString(ruleI, "Url")
+			urlEntry, err = util.ParseString(ruleI, "Url")
 			if err != nil {
 				b.Error(err)
 			}
 
-			urlPath, err = util.ParseString(ruleI, "UrlPath")
-			if err != nil {
-				b.Error(err)
-			}
+			if strings.HasPrefix(urlEntry, "http") {
+				url = urlEntry
+				urlTree = nil
 
-			if len(url) != 0 && len(urlPath) != 0 {
-				b.Error(errors.New("Specify either a url or a path to a url"))
-				continue
-			}
-
-			if len(url) == 0 {
-				token, err := jee.Lexer(urlPath)
+			} else {
+				url = ""
+				token, err := jee.Lexer(urlEntry)
 				if err != nil {
 					b.Error(err)
 					continue
@@ -126,21 +116,29 @@ func (b *WebRequest) Run() {
 				}
 			}
 
-			bodyPath, err = util.ParseString(ruleI, "BodyPath")
+			httpMethod, err = util.ParseString(ruleI, "Method")
 			if err != nil {
 				b.Error(err)
-				continue
-			}
-			token, err := jee.Lexer(bodyPath)
-			if err != nil {
-				b.Error(err)
-				continue
+				break
 			}
 
-			bodyTree, err = jee.Parser(token)
-			if err != nil {
-				b.Error(err)
-				continue
+			if httpMethod == "POST" || httpMethod == "PUT" {
+				bodyPath, err = util.ParseString(ruleI, "BodyPath")
+				if err != nil {
+					b.Error(err)
+					continue
+				}
+				token, err := jee.Lexer(bodyPath)
+				if err != nil {
+					b.Error(err)
+					continue
+				}
+
+				bodyTree, err = jee.Parser(token)
+				if err != nil {
+					b.Error(err)
+					continue
+				}
 			}
 
 			rule := ruleI.(map[string]interface{})
@@ -239,8 +237,7 @@ func (b *WebRequest) Run() {
 
 		case resp := <-b.queryrule:
 			resp <- map[string]interface{}{
-				"Url":      url,
-				"UrlPath":  urlPath,
+				"Url":      urlEntry,
 				"BodyPath": bodyPath,
 				"Method":   httpMethod,
 				"Headers":  headerRule,
